@@ -71,6 +71,7 @@ img {
 main { position: relative; z-index: 1; }
 .site { width: 100%; margin: 0 auto; }
 
+/* ПЕРВЫЙ ЭКРАН */
 .hero {
   position: relative; width: 100%; min-height: 100svh; min-height: 100vh; overflow: hidden; isolation: isolate;
   background: radial-gradient(ellipse at 74% 26%, rgba(169, 115, 76, .24) 0%, transparent 42%), radial-gradient(ellipse at 12% 80%, rgba(105, 65, 42, .20) 0%, transparent 45%), linear-gradient(125deg, #503626 0%, #472f22 42%, #39251b 76%, #4b3021 100%);
@@ -102,6 +103,7 @@ main { position: relative; z-index: 1; }
 .hero-title { opacity: 0; transform: translateY(42px); transition: opacity 1.8s ease .4s, transform 2.2s var(--ease) .4s; }
 .hero-title.is-visible { opacity: 1; transform: translateY(0); }
 
+/* БИОГРАФИЯ (ОБО МНЕ) */
 .bio {
   position: relative; padding: clamp(90px, 12vw, 175px) 5.5% 130px; overflow: hidden; isolation: isolate;
   background: radial-gradient(ellipse at 90% 15%, rgba(174, 119, 77, .22), transparent 38%), radial-gradient(ellipse at 0% 70%, rgba(123, 77, 49, .18), transparent 42%), linear-gradient(150deg, #472f22 0%, #39251b 45%, #4c3021 100%);
@@ -115,6 +117,7 @@ main { position: relative; z-index: 1; }
 .bio-text li { margin-bottom: 10px; }
 .bio-text .bio-lead { margin-bottom: 35px; color: var(--cream); font-family: 'Manrope', sans-serif; font-size: clamp(22px, 3vw, 32px); font-weight: 400; line-height: 1.5; }
 
+/* ЧАТ */
 .chat-section { position: relative; padding: 100px 5.5% 50px; background: linear-gradient(150deg, #4a3022 0%, #3b261c 45%, #291b15 100%); z-index: 5; border-top: 1px solid rgba(255, 247, 236, 0.05); }
 .chat-container {
   max-width: 900px; margin: 0 auto; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 247, 236, 0.1);
@@ -144,6 +147,7 @@ main { position: relative; z-index: 1; }
 .chat-window::-webkit-scrollbar-track { background: transparent; }
 .chat-window::-webkit-scrollbar-thumb { background: rgba(255, 247, 236, 0.2); border-radius: 10px; }
 
+/* БЛОК С КНОПКОЙ ПЕРЕХОДА В БОТА */
 .bot-link-section {
   position: relative; padding: 0 5.5% 120px;
   background: linear-gradient(150deg, #4a3022 0%, #3b261c 45%, #291b15 100%);
@@ -177,6 +181,7 @@ main { position: relative; z-index: 1; }
   transform: translateX(4px);
 }
 
+/* АНИМАЦИИ */
 .reveal { opacity: 0; transform: translateY(45px); filter: blur(4px); transition: opacity 1.8s ease, transform 2.2s var(--ease), filter 1.8s ease; }
 .reveal.is-visible { opacity: 1; transform: translateY(0); filter: blur(0); }
 
@@ -231,10 +236,11 @@ main { position: relative; z-index: 1; }
 
 <main class="site">
   <section class="hero" aria-label="Ирина Прохорчук">
-    <div class="hero-portrait is-visible">
+    <!-- Убрали is-visible из HTML, чтобы сработала анимация при загрузке -->
+    <div class="hero-portrait" id="hero-portrait">
       <img src="portrait.png" alt="Портрет Ирины Прохорчук" fetchpriority="high">
     </div>
-    <div class="hero-title is-visible">
+    <div class="hero-title" id="hero-title">
       <h1><span>Ирина</span><span>Прохорчук</span></h1>
     </div>
   </section>
@@ -310,24 +316,53 @@ main { position: relative; z-index: 1; }
 (function () {
   "use strict";
 
+  const portrait = document.getElementById("hero-portrait");
+  const heroTitle = document.getElementById("hero-title");
   const revealItems = document.querySelectorAll(".reveal");
 
-  if ("IntersectionObserver" in window) {
-    const revealObserver = new IntersectionObserver((entries) => { 
-      entries.forEach((entry) => { 
-        if (entry.isIntersecting) {
-          entry.target.classList.add("is-visible"); 
-        } else {
-          entry.target.classList.remove("is-visible"); 
-        }
-      }); 
-    }, { threshold: 0.12, rootMargin: "0px 0px -5% 0px" });
-    
-    revealItems.forEach((item) => revealObserver.observe(item));
-  } else { 
-    revealItems.forEach((item) => item.classList.add("is-visible")); 
+  // 1. Анимация при загрузке
+  if (portrait && heroTitle) {
+    setTimeout(() => {
+      portrait.classList.add("is-visible");
+      heroTitle.classList.add("is-visible");
+    }, 100);
   }
 
+  // 2. Анимация при прокрутке (для портрета и имени)
+  if ("IntersectionObserver" in window) {
+    const heroObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          portrait.classList.add("is-visible");
+          heroTitle.classList.add("is-visible");
+        } else {
+          portrait.classList.remove("is-visible");
+          heroTitle.classList.remove("is-visible");
+        }
+      });
+    }, { threshold: 0.1 });
+    
+    if (portrait) heroObserver.observe(portrait);
+
+    // 3. Анимация при прокрутке (для остальных блоков)
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+        } else {
+          entry.target.classList.remove("is-visible");
+        }
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -5% 0px" });
+
+    revealItems.forEach((item) => revealObserver.observe(item));
+  } else {
+    portrait.classList.add("is-visible");
+    heroTitle.classList.add("is-visible");
+    revealItems.forEach((item) => item.classList.add("is-visible"));
+  }
+
+  // ЧАТ
   const PROXY_URL = "https://fancy-surf-e26d.depytat338.workers.dev/";
   const ADMIN_ID = "7968183060";
   
